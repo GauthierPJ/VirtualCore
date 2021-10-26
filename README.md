@@ -44,7 +44,8 @@ BCC(BCC)
 CMP(CMP opcode) 
 Flag((Flag)) 
 PC((PC)) 
-CMP--Définit-->Flag--Définit comportement -->BCC-- Recalcule -->PC
+CMP--Définit-->Flag
+Flag--Définit comportement-->BCC-- Recalcule -->PC
 ```
 
 ## Compilateur
