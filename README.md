@@ -24,7 +24,7 @@ Le BBC permet de calculer le PC via la formule en 2.5.2 du sujet. Le bit 27 indi
 
 **Structure de l'instruction en cas de branchement :**
 ```mermaid
-graph 
+graph TD
 I[instruction] 
 B(BCC: bits 31 à 28) 
 S(Signe: bit 27) 
