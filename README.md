@@ -24,14 +24,14 @@ Le BBC permet de calculer le PC via la formule en 2.5.2 du sujet. Le bit 27 indi
 
 **Structure de l'instruction en cas de branchement :**
 ```mermaid
-graph
-I[instruction]
-B(BCC: bits 31 à 28)
-S(Signe: bit 27)
-R(reste des bits: de 26 à 0)
-I-->B
-I-->S
-I-->R
+graph 
+I[instruction] 
+B(BCC: bits 31 à 28) 
+S(Signe: bit 27) 
+R(reste des bits: de 26 à 0) 
+I-->B 
+I-->S 
+I-->R 
 ```
 
 #### CMP OP code
@@ -39,12 +39,12 @@ Les codes opérandes de comparaison initialisent des flags permettant aux condit
 
 
 ```mermaid
-graph LR
-BCC(BCC)
-CMP(CMP opcode)
-Flag((Flag))
-PC((PC))
-CMP--Définit-->Flag-.Définit comportement.->BCC--Recalcule-->PC
+graph LR 
+BCC(BCC) 
+CMP(CMP opcode) 
+Flag((Flag)) 
+PC((PC)) 
+CMP--Définit-->Flag-. Définit comportement .->BCC-- Recalcule -->PC
 ```
 
 ## Compilateur
