@@ -4,7 +4,7 @@
 ---
 ## Coeur Virtuel
 
-#### Encodage Instruction :
+#### Encodage Instruction
 | BCC [31;28]| Toujours 0 [27;25]| Flag Valeur Immédiate {24}| Code Opérande [23;20]|Première Opérande [19;16]| Seconde Opérande [15;12]|Registre Destination  [11;8]    | Valeur Immédiate [7;0]|
 | ----------- | ----------- |----------- | ----------- |----------- | ----------- |----------- | ----------- |
 | 0000      | 000       |0      | 0000       |0000      | 0000       |0000      | 0000 0000       |
@@ -17,21 +17,21 @@
 * **Première opérande** : Registre utilisé en premier membre d'opération
 * **Deuxième opérande** : Registre utilisé en second membre d'opération
 * **Registre destination** : Registre utilisé pour garder le résultat de l'opération
-* **Valeur immédirate** : Valeur passée via le code
+* **Valeur immédiate** : Valeur passée via le code
 
 #### Formule Branchement
 Le BBC permet de calculer le PC via la formule en 2.5.2 du sujet. Le bit 27 indique si on ajoute ou soustrait. Le reste des bits (26 à 0) indique de combien on incrémente/décrémente le PC.
 
 **Structure de l'instruction en cas de branchement :**
 ```mermaid
-graph TD
-I[instruction] 
-B(BCC: bits 31 à 28) 
-S(Signe: bit 27) 
-R(reste des bits: de 26 à 0) 
-I-->B 
-I-->S 
-I-->R 
+graph TD 
+I[instruction]
+B(BCC: bits 31 à 28)
+S(Signe: bit 27)
+R(reste des bits: de 26 à 0)
+I-->B
+I-->S
+I-->R
 ```
 
 #### CMP OP code
@@ -39,14 +39,12 @@ Les codes opérandes de comparaison initialisent des flags permettant aux condit
 
 
 ```mermaid
-graph LR 
-BCC(BCC) 
-CMP(CMP opcode) 
-Flag((Flag)) 
-PC((PC)) 
-CMP--Définit-->Flag
-Flag--Définit comportement-->BCC
-BCC--Recalcule-->PC
+graph LR
+BCC(BCC)
+CMP(CMP opcode)
+Flag((Flag))
+PC((PC))
+CMP--Définit-->Flag-.Définit comportement.->BCC--Recalcule-->PC
 ```
 
 ## Compilateur
@@ -68,9 +66,10 @@ BCC--Recalcule-->PC
 * [ ] *fonction* **execute :** Réalise l'opération (en héxadécimal)
 
 ## Compilateur
-* [ ] test
-* [ ] test
-* [ ] test
+* [ ] lire le fichier source ligne par ligne
+* [ ] formater chaque ligne pour respecter un format **constant** et aider la **détection d'erreur**
+* [ ] utiliser un __dictionaire/tableau associatif__ pour match les instructions leur valeur binaire (permet d'éviter trop de *if/switch*)
+* [ ] s'assurer que chaque bloc écrit fait bien 32 bits de long et que les différentes partie de l'instruction sont de la bonne longueur
 
 ### Programmes
 #### Programme 1
