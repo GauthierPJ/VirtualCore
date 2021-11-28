@@ -2,7 +2,6 @@
 
 from sys import argv
 from re import match
-import struct
 
 
 ###############################################################################
@@ -26,8 +25,9 @@ def verif_standard(operand_list) :
 def verif_branchement(operand_list) : 
     try:
         offset = operand_list[0]
-        #Remove the "-" for the isdigit function
-        return (len(operand_list) == 1 ) and offset.replace("-","").isdigit()
+        #Remove the "-" for the isdigit function*
+        # 134217727
+        return (len(operand_list) == 1 ) and (offset.replace("-","").isdigit() and int(offset.replace("-","")) < 134217727)
     except IndexError:
         return False
     
@@ -75,7 +75,6 @@ def print_ins_b(ins) :
     print("BCC            [28-31] : " + ' '.join(ins[28:32]))
     
 def print_ins_b_branchement(ins) : 
-    print(ins)
     print("\n#---------------------------------------#")
     print("Program Counter [0-26] : " + ' '.join(ins[0:27]))
     print("Signe             [27] : " + ' '.join(ins[27]))
@@ -141,7 +140,6 @@ def translate_ins_branchement(op_list) :
         res[27] = "1"
     res[0:27] = '{0:027b}'.format(int(offset.replace("-","")))
     res[28:32] = dic_opcode[opcode]["code"]
-    print(res[0:27])
     return ''.join(res)    
 
 
@@ -159,7 +157,11 @@ def translate_ins_cmp(op_list) :
         res[0:8] = '{0:08b}'.format(int(op2))
         res[24] = "1"
     
-    res[16:20] = dic_register[op1]
+    if(opcode == "MOV") : 
+        res[8:12] = dic_register[op1]
+    else : 
+        res[16:20] = dic_register[op1]
+        
     res[20:24] = dic_opcode[opcode]["code"]
    
     return ''.join(res)  
@@ -306,13 +308,13 @@ def main() :
             opcode = ins.split(" ")[0] 
             ins_b = dic_opcode[opcode]["execute"](ins.split(" ")[:])
             write_bin_to_file(ins_b,binary_file)
-            
+            print_ins_b(ins_b)
         print("OK2")
         binary_file.close()
     else : 
         print("KO")   
-    
-    
+
+
     
 
 if __name__ == '__main__': main()
