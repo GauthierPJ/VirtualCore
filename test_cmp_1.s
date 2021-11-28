@@ -1,0 +1,23 @@
+AND 
+AND R1 
+AND R1 R2 
+AND R1 R17
+AND R1 R2 R3 
+AND R1 R2 R3 R4 
+AN
+AND 1 R2 R3 
+AND R1 1 2
+---
+###
+++*
+
+CMP 
+CMP R1 
+CMP R1 R2 
+CMP R1 R2 R3 
+CMP 1 R2 
+CMP R1 2
+
+B 25 
+B -3 
+B R1 
