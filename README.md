@@ -62,13 +62,22 @@ CMP--Définit-->Flag-.Définit comportement.->BCC--Recalcule-->PC
 
 ## Coeur
 * [ ] *fonction* **fetch :**  Lit l'instruction à exécuter et calcule la nouvelle valeur du PC
+    * [ ] Calcul PC (+1 ou offset)
+    * [ ] Envoyer (chaque) instruction à la fonction `decode`
 * [ ] *fonction* **decode :** Décode l'instruction (décrite dans le tableau)
+    * [ ] Lire l'instruction (de droite à gauche (pour commencer par BCC))
+    * [ ] Établir la correspondance, BCC ou OPCODE pour la fonction `execute`
 * [ ] *fonction* **execute :** Réalise l'opération (en héxadécimal)
-
+* [ ] Création de mémoires : 
+    * [ ] Registres (R0 - R15)
+    * [ ] Flag 
+    * [ ] BCC
+* Carry ? 
+ 
 ## Compilateur
 * [x] lire le fichier source ligne par ligne
 * [x] formater chaque ligne pour respecter un format **constant** et aider la **détection d'erreur**
-* [ ] utiliser un __dictionaire/tableau associatif__ pour match les instructions leur valeur binaire (permet d'éviter trop de *if/switch*)
+* [x] utiliser un __dictionaire/tableau associatif__ pour match les instructions leur valeur binaire (permet d'éviter trop de *if/switch*)
 * [ ] s'assurer que chaque bloc écrit fait bien 32 bits de long et que les différentes partie de l'instruction sont de la bonne longueur
 
 ### Programmes
