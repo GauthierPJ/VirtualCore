@@ -66,8 +66,8 @@ CMP--Définit-->Flag-.Définit comportement.->BCC--Recalcule-->PC
 * [ ] *fonction* **execute :** Réalise l'opération (en héxadécimal)
 
 ## Compilateur
-* [ ] lire le fichier source ligne par ligne
-* [ ] formater chaque ligne pour respecter un format **constant** et aider la **détection d'erreur**
+* [x] lire le fichier source ligne par ligne
+* [x] formater chaque ligne pour respecter un format **constant** et aider la **détection d'erreur**
 * [ ] utiliser un __dictionaire/tableau associatif__ pour match les instructions leur valeur binaire (permet d'éviter trop de *if/switch*)
 * [ ] s'assurer que chaque bloc écrit fait bien 32 bits de long et que les différentes partie de l'instruction sont de la bonne longueur
 
