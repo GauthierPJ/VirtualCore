@@ -87,11 +87,13 @@ def print_ins_b_branchement(ins) :
 ##############################################################################    
 
 def write_bin_to_file(bits_string, f) : 
-    i = 0
+    i = len(bits_string)
     buffer = bytearray()
-    while i < len(bits_string):
-        buffer.append(int(bits_string[i:i+8], 2))
-        i += 8
+    # We stored bits_string as little endian. 
+    # We have to store as big endian in the binary
+    while i > 0:
+        buffer.append(int(bits_string[i-8:i], 2))
+        i -= 8
     f.write(buffer)
         
         
