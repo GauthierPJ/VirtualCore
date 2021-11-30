@@ -6,14 +6,27 @@
 #define ERROR -1 
 #define SUCCESS 0
 
+// Returns 0 if the current ins is not a BCC. Something else otherwise.
+int is_BCC(char last_ins_byte){
+    return (last_ins_byte & 0xF); //(16) = 00001111(2) = 1111(2)
+}   
 
+void fetch(char** instructions, unsigned int nb_ins){
+    // The PC corresponds to the address of the next instructions, which means the 
+    // first one at the beginning.
+    //long long int PC = instructions[0][0]; 
+    // For each instruction
+    for(unsigned int i = 0 ; i < nb_ins ; i++){
+        // If the current instruction is a BCC
+        if(is_BCC(instructions[i][3])){
+            // Calcul new PC and not execute the instruction
+            printf("X = %x \n", instructions[i][3]);
+        } else {
+            // PC += 1 and execute the instruction
+            printf("Y = %1x \n", instructions[i][3]);
+        }
+    }
 
-
-void fetch(char** instructions){
-    //Reading each instructions
-    // for(unsigned char i = 0 ; i < INS_SIZE ; i++){
-
-    // }
 }
 
 void decode(){
@@ -98,7 +111,7 @@ char** init_ins(char* argv, unsigned int* ptr_nb_ins){
 
       for (unsigned char b = 0; b < INS_SIZE; b++){
         // save the 4 bytes in a cell
-        instructions[l][b] = program[(l*4)+(3-b)];
+        instructions[l][b] = program[(l*INS_SIZE)+((INS_SIZE-1)-b)];
         // switch big endian exe to little endian instructions to deal with
         // 0 -> 3 
         // 1 -> 2 
@@ -124,6 +137,7 @@ int main(int argc, char *argv[]){
 
     unsigned int nb_ins = 0;
     unsigned int* ptr_nb_ins = &nb_ins;
+    
 
     char** instructions = init_ins(argv[1], ptr_nb_ins);
 
@@ -132,6 +146,8 @@ int main(int argc, char *argv[]){
     }
 
     print_ins(instructions, nb_ins);
+
+    fetch(instructions, nb_ins);
 
     if(free_2d(instructions, nb_ins) == ERROR){
         return ERROR;
