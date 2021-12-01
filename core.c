@@ -5,16 +5,61 @@
 #define INS_SIZE 4
 #define ERROR -1 
 #define SUCCESS 0
+#define REGISTER_NUMBERS 16
 
 // Returns 0 if the current ins is not a BCC. Something else otherwise.
 int is_BCC(char last_ins_byte){
     return (last_ins_byte & 0xF); //(16) = 00001111(2) = 1111(2)
 }   
 
+// Returns the pointer on the 16 initialized registers
+// NB : int* because a register is stored on 4 bytes
+long*  init_registers(){
+    long* registers = (long*) malloc(16*sizeof(long)); // Pointer on registers. Return value
+    char* get_hex = (char*) malloc(11*sizeof(char)); // Get ascii hex value of each registers of the file list
+    FILE* f; // Pointer on the register init state file
+    char c;
+    unsigned int i = 0;
+    unsigned int y = 0;
+
+    f = fopen("initial_register_state.conf","r");
+    
+    // check the file could be opened or exits
+    if (f==NULL){
+        printf("Error : Something went wrong opening the specified file\n");
+        printf("Hint  : The file must be called 'initial_register_state.conf'\n");
+        return NULL;
+    }
+
+    while ((c = getc(f)) != EOF){
+        if(c == '='){
+            while(i < 10){
+                c = getc(f);
+                get_hex[i] = c;
+                i++;
+            }
+            get_hex[i++] = '\0';
+            registers[y] = strtol(get_hex, NULL, 0);
+            i=0;
+            y++;
+            if(y > 16){
+                printf("Error : The number of initial registers must be 16. \n");
+                return NULL;
+            }
+        }
+    }
+    free(get_hex);
+    if(y < 16){
+        printf("Error : The number of initial registers must be 16. \n");
+        return NULL;
+    }
+    return registers;
+}
+
 void fetch(char** instructions, unsigned int nb_ins){
     // The PC corresponds to the address of the next instructions, which means the 
     // first one at the beginning.
-    //long long int PC = instructions[0][0]; 
+    long long int PC = instructions[0][0]; 
     // For each instruction
     for(unsigned int i = 0 ; i < nb_ins ; i++){
         // If the current instruction is a BCC
@@ -141,6 +186,8 @@ int main(int argc, char *argv[]){
 
     char** instructions = init_ins(argv[1], ptr_nb_ins);
 
+    long* registers = init_registers();
+
     if(instructions == NULL){
         return ERROR;
     }
@@ -152,6 +199,8 @@ int main(int argc, char *argv[]){
     if(free_2d(instructions, nb_ins) == ERROR){
         return ERROR;
     }    
+    free(registers);
+    registers = NULL;
 
     return SUCCESS;
     
