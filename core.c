@@ -12,6 +12,60 @@ int is_BCC(char last_ins_byte){
     return (last_ins_byte & 0xF); //(16) = 00001111(2) = 1111(2)
 }   
 
+void fn_cmp(long op1, long op2, __uint8_t* flag){
+    // Reset flag for the next instruction
+    *flag = 0x0;
+    if(op1 == op2){
+        *flag = *flag | 0x32;
+    } else {
+        *flag = *flag | 0x16;
+    }
+    if(op1 <= op2)
+        *flag = *flag | 0x8;
+    if(op1 >= op2) 
+        *flag = *flag | 0x4;
+    if(op1 < op2) 
+        *flag = *flag | 0x2;
+    if(op1 > op2) 
+        *flag = *flag | 0x1;
+}
+
+void fn_and(long* dest, long op1, long op2){
+    *dest = op1 & op2;
+}
+
+void fn_or(long* dest, long op1, long op2){
+    *dest = op1 | op2;
+}
+
+void fn_xor(long* dest, long op1, long op2){
+    *dest = op1 ^ op2;
+}
+
+void fn_add(long* dest, long op1, long op2){
+    *dest = op1 + op2;
+}
+
+void fn_sub(long* dest, long op1, long op2){
+    *dest = op1 - op2;
+}
+
+
+void fn_mov(long* dest, long* op1){
+    dest = op1;
+}
+
+void fn_lsh(long* dest, long op1, long op2){
+    *dest = op1 << op2;
+}
+
+void fn_rsh(long* dest, long op1, long op2){
+    *dest = op1 >> op2;
+}
+
+
+
+
 // Returns the pointer on the 16 initialized registers
 // NB : int* because a register is stored on 4 bytes
 long*  init_registers(){
@@ -35,13 +89,13 @@ long*  init_registers(){
         if(c == '='){
             while(i < 10){
                 c = getc(f);
-                get_hex[i] = c;
-                i++;
+                get_hex[++i] = c;
             }
             get_hex[i++] = '\0';
             registers[y] = strtol(get_hex, NULL, 0);
             i=0;
             y++;
+            printf("\n ");
             if(y > 16){
                 printf("Error : The number of initial registers must be 16. \n");
                 return NULL;
@@ -60,6 +114,9 @@ void fetch(char** instructions, unsigned int nb_ins){
     // The PC corresponds to the address of the next instructions, which means the 
     // first one at the beginning.
     long long int PC = instructions[0][0]; 
+    // Unsigned byte for the flag
+    __uint8_t flag = 0;
+    __uint8_t* ptf_flag = &flag;
     // For each instruction
     for(unsigned int i = 0 ; i < nb_ins ; i++){
         // If the current instruction is a BCC
@@ -182,13 +239,21 @@ int main(int argc, char *argv[]){
 
     unsigned int nb_ins = 0;
     unsigned int* ptr_nb_ins = &nb_ins;
+
     
+
+    
+    /***********************************************************************
+     *                           INIT VARIABLES                            *
+     * ********************************************************************/
 
     char** instructions = init_ins(argv[1], ptr_nb_ins);
 
     long* registers = init_registers();
 
-    if(instructions == NULL){
+
+
+    if(instructions == NULL){ //|| register == NULL){
         return ERROR;
     }
 

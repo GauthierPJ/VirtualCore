@@ -70,8 +70,13 @@ CMP--Définit-->Flag-.Définit comportement.->BCC--Recalcule-->PC
 * [ ] *fonction* **execute :** Réalise l'opération (en héxadécimal)
 * [ ] Création de mémoires : 
     * [ ] Registres (R0 - R15)
-    * [ ] Flag 
-    * [ ] BCC
+    * [ ] Flag. Sur un octet, ordre des bits, du bit de poids fort vers bit de poids faible :
+        *  |  0  |  0  | BEQ | BNE | BLE | BGE | BL | BG |
+        *  |  7  |  6  |  5  |  4  |  3  |  2   |  1 |  0  |
+        * #Thomas si tu veux faire un tableaux vasy jsp comment faire lol
+    * [ ] PC
+* Lien pour taille des variables : https://docs.oracle.com/cd/E19253-01/819-6958/chp-typeopexpr-2/index.html 
+(/!\ C'est pas uint8_t c'est __uint8_t par exemple...)
 * Carry ? 
  
 ## Compilateur
