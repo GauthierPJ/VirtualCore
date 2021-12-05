@@ -2,15 +2,33 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+
 #define INS_SIZE 4
 #define ERROR -1 
 #define SUCCESS 0
 #define REGISTER_NUMBERS 16
 
+
 // Returns 0 if the current ins is not a BCC. Something else otherwise.
 int is_BCC(char last_ins_byte){
     return (last_ins_byte & 0xF); //(16) = 00001111(2) = 1111(2)
 }   
+
+unsigned int reverseBits(unsigned int num)
+{
+    unsigned int  NO_OF_BITS = sizeof(num) * 8;
+    unsigned int reverse_num = 0, i, temp;
+  
+    for (i = 0; i < NO_OF_BITS; i++)
+    {
+        temp = (num & (1 << i));
+        if(temp)
+            reverse_num |= (1 << ((NO_OF_BITS - 1) - i));
+    }
+   
+    return reverse_num;
+}
+
 
 void fn_cmp(long op1, long op2, __uint8_t* flag){
     // Reset flag for the next instruction
@@ -95,7 +113,6 @@ long*  init_registers(){
             registers[y] = strtol(get_hex, NULL, 0);
             i=0;
             y++;
-            printf("\n ");
             if(y > 16){
                 printf("Error : The number of initial registers must be 16. \n");
                 return NULL;
@@ -149,27 +166,8 @@ void print_ins(char** instructions, unsigned int nb_ins ){
     }
 }
 
-int free_2d(char** array, unsigned int len){
 
-    if(array == NULL){
-        return ERROR;
-    }
-
-    for(unsigned int i = 0 ; i < len ; i++){
-        if(array[i] == NULL){
-            return ERROR;
-        } else {
-            free(array[i]);
-            array[i] = NULL;
-        }
-    }
-
-    free(array);
-    array = NULL;
-    return SUCCESS;
-}
-
-char** init_ins(char* argv, unsigned int* ptr_nb_ins){
+__int32_t* init_ins(char* argv, unsigned int* ptr_nb_ins){
      // open the given file
     FILE* f;
     f = fopen(argv,"rb");
@@ -183,48 +181,57 @@ char** init_ins(char* argv, unsigned int* ptr_nb_ins){
     // get size of the file and replaces the reader to the begining
     fseek(f, 0L, SEEK_END);
     unsigned long int nb_bytes_to_read = ftell(f);
+    
     if(nb_bytes_to_read > 4294967295){
         return NULL;
     }
+    //n instructions -> each instruction is n/4 bytes
+    const unsigned int nb_ins = nb_bytes_to_read/INS_SIZE;
     fseek(f, 0L, SEEK_SET);
     
     // initialiaze the pointer to the content of the program
-    char * program = malloc(nb_bytes_to_read);
+    //__uint8_t* program = (__uint8_t*) malloc(nb_ins*sizeof(__uint8_t));
     // get the data from the binary
-    fread(program, INS_SIZE, nb_bytes_to_read, f);
-
-    //n instructions -> each instruction is n/4 bytes
-    const unsigned int nb_ins = nb_bytes_to_read/INS_SIZE;
-    if(nb_ins > 65535 ){
-        return NULL;
-    }
     
-    char ** instructions = (char**) malloc(nb_ins*sizeof(char*));
+
+    // if(nb_ins > 4294967296 ){
+    //     return NULL;
+    // }
+    
+
+
+    __int32_t* instructions = (__int32_t*) malloc(nb_ins*sizeof(__int32_t));
+    fread(instructions, INS_SIZE, nb_ins, f);
     if(instructions == NULL){
         return NULL;
-    }
-    
-    for(unsigned char i = 0; i < nb_ins ; i++){
-        instructions[i] = (char*) malloc(INS_SIZE * sizeof(char));
+    } else {
+        printf("Value = %x \n",reverseBits(instructions[0]));
     }
 
-    for (unsigned int l = 0; l < nb_ins; l++){
-      // for each insctruction
+    // Valeur qu'il faut trouver = 00010100001 = 00 00 01 48 
+    // Généré :
 
-      for (unsigned char b = 0; b < INS_SIZE; b++){
-        // save the 4 bytes in a cell
-        instructions[l][b] = program[(l*INS_SIZE)+((INS_SIZE-1)-b)];
-        // switch big endian exe to little endian instructions to deal with
-        // 0 -> 3 
-        // 1 -> 2 
-        // 2 -> 1 
-        // 3 -> 0
-      }
-    }
+    //     /*
+    //     12 80 00 00
+    //     00010010 10000000 00000000 00000000
+
+    //     -> 
+
+    //     00000000000000000000000101001000
+
+    //     0000000000000000000000010100 1000 & 1111 -> 1000
+
+    //     2 problèmes : inverser puis stocker dans une seule case
+
+    //     Renverser une la représentation binaire d'un nombre
+        
+    //     */
+
+    // }
     // Modify the value of the pointer
     *ptr_nb_ins = nb_ins;
-    free(program);
-    program = NULL;
+    //free(program);
+    //program = NULL;
     return instructions;
 }
 
@@ -247,24 +254,22 @@ int main(int argc, char *argv[]){
      *                           INIT VARIABLES                            *
      * ********************************************************************/
 
-    char** instructions = init_ins(argv[1], ptr_nb_ins);
+    __int32_t* instructions = init_ins(argv[1], ptr_nb_ins);
 
     long* registers = init_registers();
-
-
 
     if(instructions == NULL){ //|| register == NULL){
         return ERROR;
     }
 
-    print_ins(instructions, nb_ins);
+    //print_ins(instructions, nb_ins);
 
-    fetch(instructions, nb_ins);
+    //fetch(instructions, nb_ins);
 
-    if(free_2d(instructions, nb_ins) == ERROR){
-        return ERROR;
-    }    
+  
     free(registers);
+    free(instructions);
+    instructions = NULL;
     registers = NULL;
 
     return SUCCESS;

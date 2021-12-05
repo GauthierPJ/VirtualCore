@@ -86,15 +86,26 @@ def print_ins_b_branchement(ins) :
 #                                  FILES                                     #
 ##############################################################################    
 
-def write_bin_to_file(bits_string, f) : 
-    i = len(bits_string)
-    buffer = bytearray()
-    # We stored bits_string as little endian. 
-    # We have to store as big endian in the binary
-    while i > 0:
-        buffer.append(int(bits_string[i-8:i], 2))
-        i -= 8
+def write_bin_to_file(bits_string, f) :     
+    bits_string_rev = bits_string[::-1]    
+    
+    # PYTHON
+    #  STR : 01 48
+    #  PRINT : 12 80 00 00
+    # C
+    # Généré     : 48 01 00 00 
+    # -> Attendu : 00 00 01 48
+    
+    print(hex(int(bits_string, 2)))
+    print(hex(int(bits_string_rev, 2)))
+    
+    buffer = bytearray()    
+    
+    
+    for i in range(4) : 
+        buffer.append(int(bits_string_rev[i*8:(i*8)+8],2))
     f.write(buffer)
+    
         
         
 # Filename : String
@@ -310,7 +321,7 @@ def main() :
             opcode = ins.split(" ")[0] 
             ins_b = dic_opcode[opcode]["execute"](ins.split(" ")[:])
             write_bin_to_file(ins_b,binary_file)
-            print_ins_b(ins_b)
+            print_ins_b_branchement(ins_b)
         print("OK2")
         binary_file.close()
     else : 
