@@ -9,6 +9,21 @@
 #define REGISTER_NUMBERS 16
 
 
+// start of test zone
+typedef void (*Operation)();
+typedef struct asso
+{
+    char* name;
+    unsigned short mask;
+    Operation func;
+} ASSO;
+
+void verifier(char* name,short mask){
+    printf("L'OP code est %s , la valeur du masque est \"%02hhx\"\n",name,mask);
+}
+// end of test zone
+
+
 // Returns 0 if the current ins is not a BCC. Something else otherwise.
 int is_BCC(__uint8_t bcc){
     return (bcc & 0xF0); //= 11110000(2) 
@@ -111,7 +126,7 @@ long*  init_registers(){
     return registers;
 }
 
-void fetch(__uint8_t** instructions, unsigned int nb_ins){
+void fetch(__uint8_t** instructions,ASSO* tab_opcode ,unsigned int nb_ins){
     // The PC corresponds to the address of the next instructions, which means the 
     // first one at the beginning.
     long long int PC = instructions[0][0]; 
@@ -119,14 +134,23 @@ void fetch(__uint8_t** instructions, unsigned int nb_ins){
     __uint8_t flag = 0;
     __uint8_t* ptf_flag = &flag;
     // For each instruction
+    printf("Traduction : \n");
     for(unsigned int i = 0 ; i < nb_ins ; i++){
         // If the current instruction is a BCC
         if(is_BCC(instructions[i][0])){
             // Calcul new PC and not execute the instruction
-            printf("X = %x \n", instructions[i][3]);
+            printf("instruction BCC ignorée pour l'instant\n ");
+            
         } else {
             // PC += 1 and execute the instruction
-            printf("Y = %x \n", instructions[i][0]);
+            //printf("Y = %x \n", instructions[i][0]);
+            for(unsigned short k = 0; k<11;k++){
+                char opcode = (0xF0 & instructions[i][1]);
+                printf("opcode : %hhx, mask : %hhx,res = %hhx\n",opcode,tab_opcode[k].mask,(opcode==tab_opcode[k].mask));
+                if((opcode == tab_opcode[k].mask) ){
+                    printf("%hhx : %s\n",i,tab_opcode[k].name);
+                }
+            }
         }
     }
 
@@ -229,8 +253,41 @@ __uint8_t** init_ins(char* argv, unsigned int* ptr_nb_ins){
     return instructions;
 }
 
+
+
+ASSO* initAsso(){
+    ASSO* opcodes = (ASSO*) malloc(11*sizeof(ASSO));
+
+    opcodes[0].name = "AND";
+    opcodes[1].name = "OR";
+    opcodes[2].name = "XOR";
+    opcodes[3].name = "ADD";
+    opcodes[4].name = "ADC";
+    opcodes[5].name = "CMP";
+    opcodes[6].name = "SUB";
+    opcodes[7].name = "SBC";
+    opcodes[8].name = "MOV";
+    opcodes[9].name = "LSH";
+    opcodes[10].name = "RSH";
+
+    for (unsigned short i = 0; i < 11; i++){
+        opcodes[i].mask = 0x00 + (i*0x10);
+        opcodes[i].func = verifier;
+    }
+   
+    return opcodes;
+}
+
 int main(int argc, char *argv[]){ 
     
+    ASSO* opcodes = initAsso();
+
+    // for (size_t i = 0; i < 11; i++)
+    // {
+    //     opcodes[i].func(opcodes[i].name,opcodes[i].mask);
+    // }
+    
+
     // verify that the right number of arguments were specifide, exits otherwise
     if(argc != 2){
         printf("Error : An executable file must be specified!\n");
@@ -258,7 +315,7 @@ int main(int argc, char *argv[]){
 
     print_ins(instructions, nb_ins);
 
-    fetch(instructions, nb_ins);
+    fetch(instructions,opcodes, nb_ins);
 
   
     free(registers);
