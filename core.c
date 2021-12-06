@@ -10,25 +10,9 @@
 
 
 // Returns 0 if the current ins is not a BCC. Something else otherwise.
-int is_BCC(char last_ins_byte){
-    return (last_ins_byte & 0xF); //(16) = 00001111(2) = 1111(2)
+int is_BCC(__uint8_t bcc){
+    return (bcc & 0xF0); //= 11110000(2) 
 }   
-
-unsigned int reverseBits(unsigned int num)
-{
-    unsigned int  NO_OF_BITS = sizeof(num) * 8;
-    unsigned int reverse_num = 0, i, temp;
-  
-    for (i = 0; i < NO_OF_BITS; i++)
-    {
-        temp = (num & (1 << i));
-        if(temp)
-            reverse_num |= (1 << ((NO_OF_BITS - 1) - i));
-    }
-   
-    return reverse_num;
-}
-
 
 void fn_cmp(long op1, long op2, __uint8_t* flag){
     // Reset flag for the next instruction
@@ -127,7 +111,7 @@ long*  init_registers(){
     return registers;
 }
 
-void fetch(char** instructions, unsigned int nb_ins){
+void fetch(__uint8_t** instructions, unsigned int nb_ins){
     // The PC corresponds to the address of the next instructions, which means the 
     // first one at the beginning.
     long long int PC = instructions[0][0]; 
@@ -137,12 +121,12 @@ void fetch(char** instructions, unsigned int nb_ins){
     // For each instruction
     for(unsigned int i = 0 ; i < nb_ins ; i++){
         // If the current instruction is a BCC
-        if(is_BCC(instructions[i][3])){
+        if(is_BCC(instructions[i][0])){
             // Calcul new PC and not execute the instruction
             printf("X = %x \n", instructions[i][3]);
         } else {
             // PC += 1 and execute the instruction
-            printf("Y = %1x \n", instructions[i][3]);
+            printf("Y = %x \n", instructions[i][0]);
         }
     }
 
@@ -156,18 +140,40 @@ void execute(){
 
 }
 
-void print_ins(char** instructions, unsigned int nb_ins ){
+void print_ins(__uint8_t** instructions, unsigned int nb_ins ){
+    printf("Instructions : \n\n");
     for(unsigned int i = 0 ; i < nb_ins ; i++){
         printf("%03d : ", i);
-        for(unsigned char y = 0 ; y < INS_SIZE ; y++){
+        for(unsigned int y = 0 ; y < INS_SIZE ; y++){
             printf("%02hhx ",instructions[i][y]);
         }
         printf("\n");
     }
+    printf("\n");
 }
 
 
-__int32_t* init_ins(char* argv, unsigned int* ptr_nb_ins){
+int free_2d(__uint8_t** array, unsigned int len){
+
+    if(array == NULL){
+        return ERROR;
+    }
+
+    for(unsigned int i = 0 ; i < len ; i++){
+        if(array[i] == NULL){
+            return ERROR;
+        } else {
+            free(array[i]);
+            array[i] = NULL;
+        }
+    }
+
+    free(array);
+    array = NULL;
+    return SUCCESS;
+}
+
+__uint8_t** init_ins(char* argv, unsigned int* ptr_nb_ins){
      // open the given file
     FILE* f;
     f = fopen(argv,"rb");
@@ -187,51 +193,39 @@ __int32_t* init_ins(char* argv, unsigned int* ptr_nb_ins){
     }
     //n instructions -> each instruction is n/4 bytes
     const unsigned int nb_ins = nb_bytes_to_read/INS_SIZE;
+    if(nb_ins > 4294967296 ){
+        return NULL;
+    }
     fseek(f, 0L, SEEK_SET);
     
-    // initialiaze the pointer to the content of the program
-    //__uint8_t* program = (__uint8_t*) malloc(nb_ins*sizeof(__uint8_t));
-    // get the data from the binary
+    //initialiaze the pointer to the content of the program
+    __uint8_t* program = (__uint8_t*) malloc(nb_bytes_to_read*sizeof(__uint8_t));
+    fread(program, INS_SIZE, nb_bytes_to_read, f);
     
 
-    // if(nb_ins > 4294967296 ){
-    //     return NULL;
-    // }
-    
-
-
-    __int32_t* instructions = (__int32_t*) malloc(nb_ins*sizeof(__int32_t));
-    fread(instructions, INS_SIZE, nb_ins, f);
-    if(instructions == NULL){
-        return NULL;
-    } else {
-        printf("Value = %x \n",reverseBits(instructions[0]));
+    __uint8_t** instructions = (__uint8_t**) malloc(nb_ins*sizeof(__uint8_t*));
+    for(unsigned int r = 0 ; r < nb_ins ; r++){
+        instructions[r] = (__uint8_t*) malloc(INS_SIZE * sizeof(__uint8_t));
     }
 
-    // Valeur qu'il faut trouver = 00010100001 = 00 00 01 48 
-    // Généré :
+    if(instructions == NULL){
+        return NULL;
+    } 
 
-    //     /*
-    //     12 80 00 00
-    //     00010010 10000000 00000000 00000000
 
-    //     -> 
+    for (unsigned int l = 0; l < nb_ins; l++){
+      // for each insctruction
+      for (unsigned int b = 0; b < INS_SIZE; b++){
+        // save the 4 bytes in a cell
+        instructions[l][b] = program[(l*INS_SIZE)+b];
+      }
+    }
 
-    //     00000000000000000000000101001000
 
-    //     0000000000000000000000010100 1000 & 1111 -> 1000
-
-    //     2 problèmes : inverser puis stocker dans une seule case
-
-    //     Renverser une la représentation binaire d'un nombre
-        
-    //     */
-
-    // }
     // Modify the value of the pointer
     *ptr_nb_ins = nb_ins;
-    //free(program);
-    //program = NULL;
+    free(program);
+    program = NULL;
     return instructions;
 }
 
@@ -254,7 +248,7 @@ int main(int argc, char *argv[]){
      *                           INIT VARIABLES                            *
      * ********************************************************************/
 
-    __int32_t* instructions = init_ins(argv[1], ptr_nb_ins);
+    __uint8_t** instructions = init_ins(argv[1], ptr_nb_ins);
 
     long* registers = init_registers();
 
@@ -262,13 +256,13 @@ int main(int argc, char *argv[]){
         return ERROR;
     }
 
-    //print_ins(instructions, nb_ins);
+    print_ins(instructions, nb_ins);
 
-    //fetch(instructions, nb_ins);
+    fetch(instructions, nb_ins);
 
   
     free(registers);
-    free(instructions);
+    free_2d(instructions,nb_ins);
     instructions = NULL;
     registers = NULL;
 

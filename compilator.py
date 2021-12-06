@@ -65,20 +65,22 @@ def verify_content(content, test=False) :
     
 def print_ins_b(ins) : 
     print("\n#---------------------------------------#")
-    print("Immediate value  [0-7] : " + ' '.join(ins[0:8]))
-    print("Dest            [8-11] : " + ' '.join(ins[8:12]))
-    print("OP 2           [12-15] : " + ' '.join(ins[12:16]))
-    print("OP 1           [16-19] : " + ' '.join(ins[16:20]))
-    print("OPCODE :       [20-23] : " + ' '.join(ins[20:24]))
-    print("Immediate value   [24] : " + ' '.join(ins[24]))
-    print("Always 0       [25-27] : " + ' '.join(ins[25:28]))
-    print("BCC            [28-31] : " + ' '.join(ins[28:32]))
+    print("Always 0       [31-25] : " + ' '.join(ins[0:7]))
+    print("Immediate value ? [24] : " + ' '.join(ins[7]))
+    print("OPCODE :       [23-20] : " + ' '.join(ins[8:12]))
+    print("OP 1           [19-16] : " + ' '.join(ins[12:16]))
+    print("OP 2           [15-12] : " + ' '.join(ins[16:20]))
+    print("Dest            [11-8] : " + ' '.join(ins[20:24]))
+    print("Immediate value  [7-0] : " + ' '.join(ins[24:32]))    
+    
     
 def print_ins_b_branchement(ins) : 
     print("\n#---------------------------------------#")
-    print("Program Counter [0-26] : " + ' '.join(ins[0:27]))
-    print("Signe             [27] : " + ' '.join(ins[27]))
-    print("BCC            [28-31] : " + ' '.join(ins[28:32]))
+    print("BCC            [31-28] : " + ' '.join(ins[0:4]))
+    print("Signe             [27] : " + ' '.join(ins[4]))
+    print("Program Counter [26-0] : " + ' '.join(ins[5:32]))
+    
+    
     
 
     
@@ -87,23 +89,18 @@ def print_ins_b_branchement(ins) :
 ##############################################################################    
 
 def write_bin_to_file(bits_string, f) :     
-    bits_string_rev = bits_string[::-1]    
     
-    # PYTHON
-    #  STR : 01 48
-    #  PRINT : 12 80 00 00
-    # C
-    # Généré     : 48 01 00 00 
-    # -> Attendu : 00 00 01 48
+    i = 0
+    buffer = bytearray()  
     
-    print(hex(int(bits_string, 2)))
-    print(hex(int(bits_string_rev, 2)))
+    #De base = 00000000 00000000 00001010 00001000
     
-    buffer = bytearray()    
+    # Généré = 80 00 00 0A
+    # 10000000 00000000 00000000 00001010
     
-    
-    for i in range(4) : 
-        buffer.append(int(bits_string_rev[i*8:(i*8)+8],2))
+    while(i < 32) :
+        buffer.append(int(bits_string[i:i+8], 2))
+        i += 8
     f.write(buffer)
     
         
@@ -134,13 +131,14 @@ def translate_ins_standard(op_list) :
     
     #If op2 is a register
     if(is_register(op2)) : 
-        res[12:16] = dic_register[op2]
+        res[16:20] = dic_register[op2]
     else : 
-        res[0:8] = '{0:08b}'.format(int(op2))
-        res[24] = "1"
-    res[8:12] = dic_register[dest]
-    res[16:20] = dic_register[op1]
-    res[20:24] = dic_opcode[opcode]["code"]
+        res[24:32] = '{0:08b}'.format(int(op2))
+        res[7] = "1"
+    res[20:24] = dic_register[dest]
+    res[12:16] = dic_register[op1]
+    res[8:12] = dic_opcode[opcode]["code"]
+    
    
     return ''.join(res)    
 
@@ -150,9 +148,9 @@ def translate_ins_branchement(op_list) :
     opcode = op_list[0]
     offset = op_list[1]
     if(offset[0] == "-") : 
-        res[27] = "1"
-    res[0:27] = '{0:027b}'.format(int(offset.replace("-","")))
-    res[28:32] = dic_opcode[opcode]["code"]
+        res[4] = "1"
+    res[5:32] = '{0:027b}'.format(int(offset.replace("-","")))
+    res[0:4] = dic_opcode[opcode]["code"]
     return ''.join(res)    
 
 
@@ -165,17 +163,17 @@ def translate_ins_cmp(op_list) :
     
     #If op2 is a register
     if(is_register(op2)) : 
-        res[12:16] = dic_register[op2]
+        res[16:20] = dic_register[op2]
     else : 
-        res[0:8] = '{0:08b}'.format(int(op2))
-        res[24] = "1"
+        res[24:32] = '{0:08b}'.format(int(op2))
+        res[7] = "1"
     
-    if(opcode == "MOV") : 
-        res[8:12] = dic_register[op1]
-    else : 
-        res[16:20] = dic_register[op1]
+    if(opcode == "MOV") : # IF MOV, store op1 in dest register
+        res[20:24] = dic_register[op1]
+    else : # IF CMP, store in op1 register
+        res[12:16] = dic_register[op1]
         
-    res[20:24] = dic_opcode[opcode]["code"]
+    res[8:12] = dic_opcode[opcode]["code"]
    
     return ''.join(res)  
     
@@ -321,7 +319,8 @@ def main() :
             opcode = ins.split(" ")[0] 
             ins_b = dic_opcode[opcode]["execute"](ins.split(" ")[:])
             write_bin_to_file(ins_b,binary_file)
-            print_ins_b_branchement(ins_b)
+            #print_ins_b_branchement(ins_b)
+            #print_ins_b(ins_b)
         print("OK2")
         binary_file.close()
     else : 
