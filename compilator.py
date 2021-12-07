@@ -27,7 +27,7 @@ def verif_branchement(operand_list) :
         offset = operand_list[0]
         #Remove the "-" for the isdigit function*
         # 134217727
-        return (len(operand_list) == 1 ) and (offset.replace("-","").isdigit() and int(offset.replace("-","")) < 134217727)
+        return (len(operand_list) == 1 ) and (offset.replace("-","").isdigit() and int(offset.replace("-","")) < 134217728)
     except IndexError:
         return False
     

@@ -14,13 +14,11 @@ typedef void (*Operation)();
 typedef struct asso
 {
     char* name;
-    unsigned short mask;
+    unsigned short value;
     Operation func;
 } ASSO;
 
-void verifier(char* name,short mask){
-    printf("L'OP code est %s , la valeur du masque est \"%02hhx\"\n",name,mask);
-}
+
 // end of test zone
 
 
@@ -126,7 +124,7 @@ long*  init_registers(){
     return registers;
 }
 
-void fetch(__uint8_t** instructions,ASSO* tab_opcode ,unsigned int nb_ins){
+void fetch(__uint8_t** instructions,ASSO* tab_opcode ,ASSO* tab_bcc,unsigned int nb_ins){
     // The PC corresponds to the address of the next instructions, which means the 
     // first one at the beginning.
     long long int PC = instructions[0][0]; 
@@ -139,17 +137,31 @@ void fetch(__uint8_t** instructions,ASSO* tab_opcode ,unsigned int nb_ins){
         // If the current instruction is a BCC
         if(is_BCC(instructions[i][0])){
             // Calcul new PC and not execute the instruction
-            printf("instruction BCC ignorée pour l'instant\n ");
+            for(unsigned short k = 0; k<7;k++){
+                __uint8_t bcc = (0xF0 & instructions[i][0]);
+                __int32_t offset = ((instructions[i][3]))+(instructions[i][2]<<8)+(instructions[i][1]<<16)+((instructions[i][0]&0x07)<<24);
+                if(instructions[i][0]&0x08){
+                    offset = offset*-1;
+                }
+                if((bcc == tab_bcc[k].value) ){
+                    printf("%03hhx : %s %d\n",i,tab_bcc[k].name,offset);
+                }
+            }
             
         } else {
             // PC += 1 and execute the instruction
             //printf("Y = %x \n", instructions[i][0]);
             for(unsigned short k = 0; k<11;k++){
-                char opcode = (0xF0 & instructions[i][1]);
-                printf("opcode : %hhx, mask : %hhx,res = %hhx\n",opcode,tab_opcode[k].mask,(opcode==tab_opcode[k].mask));
-                if((opcode == tab_opcode[k].mask) ){
-                    printf("%hhx : %s\n",i,tab_opcode[k].name);
+                __uint8_t opcode = (0xF0 & instructions[i][1]);
+                if((opcode == tab_opcode[k].value) ){
+                    printf("%03hhx : %s ",i,tab_opcode[k].name);
                 }
+            }
+            if(instructions[i][0] & 0x0F){
+                printf("R%d R%d %d\n",(instructions[i][2] & 0x0F),(instructions[i][1] & 0x0F),(instructions[i][3]));
+            }else{
+
+                printf("R%d R%d R%d\n",(instructions[i][2] & 0x0F),(instructions[i][1] & 0x0F),(instructions[i][2]>>4));
             }
         }
     }
@@ -255,8 +267,8 @@ __uint8_t** init_ins(char* argv, unsigned int* ptr_nb_ins){
 
 
 
-ASSO* initAsso(){
-    ASSO* opcodes = (ASSO*) malloc(11*sizeof(ASSO));
+ASSO* init_asso_opcode(){
+    ASSO* opcodes = (ASSO*) malloc(11 * sizeof(ASSO));
 
     opcodes[0].name = "AND";
     opcodes[1].name = "OR";
@@ -271,23 +283,38 @@ ASSO* initAsso(){
     opcodes[10].name = "RSH";
 
     for (unsigned short i = 0; i < 11; i++){
-        opcodes[i].mask = 0x00 + (i*0x10);
-        opcodes[i].func = verifier;
+        opcodes[i].value = 0x00 + (i*0x10);
     }
    
     return opcodes;
 }
 
+ASSO* init_asso_bcc(){
+    ASSO* bcc = (ASSO*) malloc(7*sizeof(ASSO));
+    bcc[0].name = "B";
+    bcc[1].name = "BEQ";
+    bcc[2].name = "BNE";
+    bcc[3].name = "BLE";
+    bcc[4].name = "BGE";
+    bcc[5].name = "BL";
+    bcc[6].name = "BG";
+
+    for (unsigned short i = 0; i < 7; i++){
+        bcc[i].value = 0x80 + (i*0x10);
+    }
+    return bcc;
+}
+
 int main(int argc, char *argv[]){ 
     
-    ASSO* opcodes = initAsso();
+    ASSO* opcodes = init_asso_opcode();
+    ASSO* bcc = init_asso_bcc();
 
-    // for (size_t i = 0; i < 11; i++)
-    // {
-    //     opcodes[i].func(opcodes[i].name,opcodes[i].mask);
-    // }
+    for (size_t i = 0; i < 7; i++)
+    {
+        printf("%s : %02hhx\n",bcc[i].name,bcc[i].value);
+    }
     
-
     // verify that the right number of arguments were specifide, exits otherwise
     if(argc != 2){
         printf("Error : An executable file must be specified!\n");
@@ -315,7 +342,7 @@ int main(int argc, char *argv[]){
 
     print_ins(instructions, nb_ins);
 
-    fetch(instructions,opcodes, nb_ins);
+    fetch(instructions,opcodes,bcc, nb_ins);
 
   
     free(registers);
