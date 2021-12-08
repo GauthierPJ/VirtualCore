@@ -18,7 +18,43 @@ typedef struct asso
     Operation func;
 } ASSO;
 
+ASSO* init_asso_opcode(){
+    ASSO* opcodes = (ASSO*) malloc(11 * sizeof(ASSO));
 
+    opcodes[0].name = "AND";
+    opcodes[1].name = "OR";
+    opcodes[2].name = "XOR";
+    opcodes[3].name = "ADD";
+    opcodes[4].name = "ADC";
+    opcodes[5].name = "CMP";
+    opcodes[6].name = "SUB";
+    opcodes[7].name = "SBC";
+    opcodes[8].name = "MOV";
+    opcodes[9].name = "LSH";
+    opcodes[10].name = "RSH";
+
+    for (unsigned short i = 0; i < 11; i++){
+        opcodes[i].value = 0x00 + (i*0x10);
+    }
+   
+    return opcodes;
+}
+
+ASSO* init_asso_bcc(){
+    ASSO* bcc = (ASSO*) malloc(7*sizeof(ASSO));
+    bcc[0].name = "B";
+    bcc[1].name = "BEQ";
+    bcc[2].name = "BNE";
+    bcc[3].name = "BLE";
+    bcc[4].name = "BGE";
+    bcc[5].name = "BL";
+    bcc[6].name = "BG";
+
+    for (unsigned short i = 0; i < 7; i++){
+        bcc[i].value = 0x80 + (i*0x10);
+    }
+    return bcc;
+}
 // end of test zone
 
 
@@ -124,7 +160,58 @@ long*  init_registers(){
     return registers;
 }
 
-void fetch(__uint8_t** instructions,ASSO* tab_opcode ,ASSO* tab_bcc,unsigned int nb_ins){
+
+
+
+
+
+
+void decode_BCC(__uint8_t* instruction){
+
+    ASSO* tab_bcc = init_asso_bcc();
+
+    for(unsigned short k = 0; k<7;k++){
+        __uint8_t bcc = (0xF0 & instruction[0]);
+        __int32_t offset = ((instruction[3]))+(instruction[2]<<8)+(instruction[1]<<16)+((instruction[0]&0x07)<<24);
+        if(instruction[0]&0x08){
+            offset = offset*-1;
+        }
+        if((bcc == tab_bcc[k].value) ){
+            printf("%s %d\n",tab_bcc[k].name,offset);
+        }
+    }
+}
+
+void decode_OPCODE(__uint8_t* instruction){
+
+    ASSO* tab_opcode = init_asso_opcode();
+
+    for(unsigned short k = 0; k<11;k++){
+        __uint8_t opcode = (0xF0 & instruction[1]);
+        if((opcode == tab_opcode[k].value) ){
+            printf("%s ",tab_opcode[k].name);
+        }
+    }
+    if(instruction[0] & 0x0F){
+        printf("R%d R%d %d\n",(instruction[2] & 0x0F),(instruction[1] & 0x0F),(instruction[3]));
+    }
+    else{
+        printf("R%d R%d R%d\n",(instruction[2] & 0x0F),(instruction[1] & 0x0F),(instruction[2]>>4));
+    }
+}
+
+
+void decode(__uint8_t* instruction){
+
+    if(is_BCC(instruction[0])){
+        decode_BCC(instruction);
+    }
+    else {
+        decode_OPCODE(instruction);
+    }
+}
+
+void fetch(__uint8_t** instructions,unsigned int nb_ins){
     // The PC corresponds to the address of the next instructions, which means the 
     // first one at the beginning.
     long long int PC = instructions[0][0]; 
@@ -134,42 +221,9 @@ void fetch(__uint8_t** instructions,ASSO* tab_opcode ,ASSO* tab_bcc,unsigned int
     // For each instruction
     printf("Traduction : \n");
     for(unsigned int i = 0 ; i < nb_ins ; i++){
-        // If the current instruction is a BCC
-        if(is_BCC(instructions[i][0])){
-            // Calcul new PC and not execute the instruction
-            for(unsigned short k = 0; k<7;k++){
-                __uint8_t bcc = (0xF0 & instructions[i][0]);
-                __int32_t offset = ((instructions[i][3]))+(instructions[i][2]<<8)+(instructions[i][1]<<16)+((instructions[i][0]&0x07)<<24);
-                if(instructions[i][0]&0x08){
-                    offset = offset*-1;
-                }
-                if((bcc == tab_bcc[k].value) ){
-                    printf("%03hhx : %s %d\n",i,tab_bcc[k].name,offset);
-                }
-            }
-            
-        } else {
-            // PC += 1 and execute the instruction
-            //printf("Y = %x \n", instructions[i][0]);
-            for(unsigned short k = 0; k<11;k++){
-                __uint8_t opcode = (0xF0 & instructions[i][1]);
-                if((opcode == tab_opcode[k].value) ){
-                    printf("%03hhx : %s ",i,tab_opcode[k].name);
-                }
-            }
-            if(instructions[i][0] & 0x0F){
-                printf("R%d R%d %d\n",(instructions[i][2] & 0x0F),(instructions[i][1] & 0x0F),(instructions[i][3]));
-            }else{
-
-                printf("R%d R%d R%d\n",(instructions[i][2] & 0x0F),(instructions[i][1] & 0x0F),(instructions[i][2]>>4));
-            }
-        }
+        printf("%02d : ",i);
+        decode(instructions[i]);
     }
-
-}
-
-void decode(){
-
 }
 
 void execute(){
@@ -265,56 +319,8 @@ __uint8_t** init_ins(char* argv, unsigned int* ptr_nb_ins){
     return instructions;
 }
 
-
-
-ASSO* init_asso_opcode(){
-    ASSO* opcodes = (ASSO*) malloc(11 * sizeof(ASSO));
-
-    opcodes[0].name = "AND";
-    opcodes[1].name = "OR";
-    opcodes[2].name = "XOR";
-    opcodes[3].name = "ADD";
-    opcodes[4].name = "ADC";
-    opcodes[5].name = "CMP";
-    opcodes[6].name = "SUB";
-    opcodes[7].name = "SBC";
-    opcodes[8].name = "MOV";
-    opcodes[9].name = "LSH";
-    opcodes[10].name = "RSH";
-
-    for (unsigned short i = 0; i < 11; i++){
-        opcodes[i].value = 0x00 + (i*0x10);
-    }
-   
-    return opcodes;
-}
-
-ASSO* init_asso_bcc(){
-    ASSO* bcc = (ASSO*) malloc(7*sizeof(ASSO));
-    bcc[0].name = "B";
-    bcc[1].name = "BEQ";
-    bcc[2].name = "BNE";
-    bcc[3].name = "BLE";
-    bcc[4].name = "BGE";
-    bcc[5].name = "BL";
-    bcc[6].name = "BG";
-
-    for (unsigned short i = 0; i < 7; i++){
-        bcc[i].value = 0x80 + (i*0x10);
-    }
-    return bcc;
-}
-
 int main(int argc, char *argv[]){ 
-    
-    ASSO* opcodes = init_asso_opcode();
-    ASSO* bcc = init_asso_bcc();
-
-    for (size_t i = 0; i < 7; i++)
-    {
-        printf("%s : %02hhx\n",bcc[i].name,bcc[i].value);
-    }
-    
+        
     // verify that the right number of arguments were specifide, exits otherwise
     if(argc != 2){
         printf("Error : An executable file must be specified!\n");
@@ -342,7 +348,7 @@ int main(int argc, char *argv[]){
 
     print_ins(instructions, nb_ins);
 
-    fetch(instructions,opcodes,bcc, nb_ins);
+    fetch(instructions, nb_ins);
 
   
     free(registers);
